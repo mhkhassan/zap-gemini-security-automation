@@ -18,15 +18,15 @@ jobs:
       - name: Create directory for ZAP reports
         run: mkdir -p ${{ github.workspace }}/zap-output
 
-      - name: Run ZAP 5-minute scan (baseline)
+      - name: Run ZAP 5-minute baseline scan
         run: |
           docker run --network="host" \
-            -v ${{ github.workspace }}/zap-output:/zap/output \
+            -v ${{ github.workspace }}/zap-output:/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
               -t "${{ github.event.inputs.target_url }}" \
-              -r /zap/output/zap_report.html \
-              -x /zap/output/zap_report.xml \
+              -r /zap/wrk/zap_report.html \
+              -x /zap/wrk/zap_report.xml \
               -m 5
 
       - name: Verify ZAP report exists
@@ -42,6 +42,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin
           git checkout -b zap-report || git checkout zap-report
           cp ${{ github.workspace }}/zap-output/zap_report.* .
           git add zap_report.*
