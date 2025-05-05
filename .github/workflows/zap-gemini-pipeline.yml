@@ -14,15 +14,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Pull ZAP Docker
-        run: docker pull owasp/zap2docker-stable
-
-      - name: Run ZAP scan
+      - name: Run ZAP scan using GHCR image
         run: |
           docker run -v ${{ github.workspace }}:/zap/wrk \
-            owasp/zap2docker-stable zap.sh \
-            -cmd -quickurl "${{ github.event.inputs.target_url }}" \
-            -quickout /zap/wrk/zap_report.xml
+          ghcr.io/zaproxy/zaproxy:stable zap.sh \
+          -cmd -quickurl "https://example.com" \
+          -quickout /zap/wrk/zap_report.xml
+
 
       - name: Commit ZAP report to branch
         run: |
