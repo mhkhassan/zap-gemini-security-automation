@@ -18,12 +18,15 @@ jobs:
       - name: Create a directory for the ZAP report
         run: mkdir -p ${{ github.workspace }}/zap-output
 
+      - name: Check directory permissions
+        run: ls -ld ${{ github.workspace }}/zap-output
+
       - name: Run ZAP scan using GHCR image
         run: |
           docker run -v ${{ github.workspace }}/zap-output:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable zap.sh \
-            -cmd -quickurl "${{ github.event.inputs.target_url }}" \
-            -quickout /zap/wrk/zap_report.xml
+            ghcr.io/zaproxy/zaproxy:stable sh -c "mkdir -p /zap/wrk && zap.sh \
+            -cmd -quickurl '${{ github.event.inputs.target_url }}' \
+            -quickout /zap/wrk/zap_report.xml"
 
       - name: Verify ZAP report exists
         run: |
