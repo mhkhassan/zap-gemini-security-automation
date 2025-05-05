@@ -21,10 +21,12 @@ jobs:
       - name: Check directory permissions
         run: ls -ld ${{ github.workspace }}/zap-output
 
-      - name: Run ZAP scan using GHCR image
+      - name: Run ZAP scan using GHCR image with correct user permissions
         run: |
-          docker run -v ${{ github.workspace }}/zap-output:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable sh -c "mkdir -p /zap/wrk && zap.sh \
+          docker run \
+            --user $(id -u):$(id -g) \
+            -v ${{ github.workspace }}/zap-output:/zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable sh -c "zap.sh \
             -cmd -quickurl '${{ github.event.inputs.target_url }}' \
             -quickout /zap/wrk/zap_report.xml"
 
