@@ -1,4 +1,4 @@
-name: ZAP Full Scan and Report
+name: ZAP Scan and Gemini Mitigation
 
 on:
   workflow_dispatch:
@@ -8,33 +8,33 @@ on:
         required: true
 
 jobs:
-  zap-full-scan:
+  zap-scan:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Create a directory for the ZAP report
+      - name: Create directory for ZAP reports
         run: mkdir -p ${{ github.workspace }}/zap-output
 
-      - name: Run full ZAP scan
+      - name: Run ZAP 5-minute scan (baseline)
         run: |
           docker run --network="host" \
-            -v ${{ github.workspace }}/zap-output:/zap/wrk \
+            -v ${{ github.workspace }}/zap-output:/zap/output \
             ghcr.io/zaproxy/zaproxy:stable \
-            zap-full-scan.py \
+            zap-baseline.py \
               -t "${{ github.event.inputs.target_url }}" \
-              -r full_zap_report.html \
-              -x full_zap_report.xml \
-              -I  # Ignore exit code on alerts to prevent build failure
+              -r /zap/output/zap_report.html \
+              -x /zap/output/zap_report.xml \
+              -m 5
 
-      - name: Check ZAP report exists
+      - name: Verify ZAP report exists
         run: |
-          if [ -f "${{ github.workspace }}/zap-output/full_zap_report.xml" ]; then
-            echo "✅ ZAP full scan completed."
+          if [ -f "${{ github.workspace }}/zap-output/zap_report.xml" ]; then
+            echo "✅ Report generated successfully."
           else
-            echo "❌ ZAP scan report not found."
+            echo "❌ Report was not generated."
             exit 1
           fi
 
@@ -43,8 +43,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b zap-report || git checkout zap-report
-          cp ${{ github.workspace }}/zap-output/full_zap_report.xml .
-          cp ${{ github.workspace }}/zap-output/full_zap_report.html .
-          git add full_zap_report.*
-          git commit -m "Add ZAP full scan report"
-          git push -f origin zap-report
+          cp ${{ github.workspace }}/zap-output/zap_report.* .
+          git add zap_report.*
+          git commit -m "Add ZAP scan report (5-minute baseline)"
+          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git zap-report
