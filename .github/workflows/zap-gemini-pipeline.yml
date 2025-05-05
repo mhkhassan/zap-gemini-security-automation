@@ -24,9 +24,13 @@ jobs:
             -cmd -quickurl "${{ github.event.inputs.target_url }}" \
             -quickout /zap/wrk/zap_report.xml
 
-      - name: Upload report
-        uses: actions/upload-artifact@v2
-        with:
-            name: ZAP Scan Report
-            path: zap_report.xml
+      - name: Commit ZAP report to branch
+        run: |
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git checkout -b zap-report
+            git add zap_report.xml
+            git commit -m "Add ZAP scan report"
+            git push -f origin zap-report
+          
 
