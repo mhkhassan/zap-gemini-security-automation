@@ -15,9 +15,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Create a directory for the ZAP report
+        run: mkdir -p zap-output
+
       - name: Run ZAP scan using GHCR image
         run: |
-          mkdir -p zap-output
           docker run -v ${{ github.workspace }}/zap-output:/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable zap.sh \
             -cmd -quickurl "${{ github.event.inputs.target_url }}" \
