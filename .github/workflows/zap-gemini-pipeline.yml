@@ -1,0 +1,31 @@
+name: ZAP Scan and Gemini Mitigation
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Website to scan"
+        required: true
+
+jobs:
+  zap-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Pull ZAP Docker
+        run: docker pull owasp/zap2docker-stable
+
+      - name: Run ZAP scan
+        run: |
+          docker run -v ${{ github.workspace }}:/zap/wrk \
+            owasp/zap2docker-stable zap.sh \
+            -cmd -quickurl "${{ github.event.inputs.target_url }}" \
+            -quickout /zap/wrk/zap_report.xml
+
+      - name: Upload report
+        uses: actions/upload-artifact@v3
+        with:
+          name: ZAP Scan Report
+          path: zap_report.xml
