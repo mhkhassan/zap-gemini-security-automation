@@ -17,14 +17,15 @@ jobs:
 
       - name: Run ZAP scan using GHCR image
         run: |
-          docker run -v ${{ github.workspace }}:/zap/wrk \
+          mkdir -p zap-output
+          docker run -v ${{ github.workspace }}/zap-output:/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable zap.sh \
             -cmd -quickurl "${{ github.event.inputs.target_url }}" \
             -quickout /zap/wrk/zap_report.xml
 
       - name: Verify ZAP report exists
         run: |
-          if [ -f "zap_report.xml" ]; then
+          if [ -f "zap-output/zap_report.xml" ]; then
             echo "✅ Report generated"
           else
             echo "❌ Report was not generated"
@@ -36,6 +37,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b zap-report || git checkout zap-report
+          cp zap-output/zap_report.xml .
           git add ./zap_report.xml
           git commit -m "Add ZAP scan report"
           git push -f origin zap-report
