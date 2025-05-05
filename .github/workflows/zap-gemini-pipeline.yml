@@ -12,39 +12,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Create a directory for the ZAP report
-        run: mkdir -p ${{ github.workspace }}/zap-output
+      - name: Create ZAP output directory
+        run: mkdir -p zap-output
 
-      - name: Check directory permissions
-        run: ls -ld ${{ github.workspace }}/zap-output
-
-      - name: Run ZAP scan using GHCR image with correct user permissions
+      - name: Run ZAP Docker container and generate report
         run: |
-          docker run \
-            --user $(id -u):$(id -g) \
+          docker run --user root \
             -v ${{ github.workspace }}/zap-output:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable sh -c "zap.sh \
-            -cmd -quickurl '${{ github.event.inputs.target_url }}' \
-            -quickout /zap/wrk/zap_report.xml"
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap.sh -cmd -quickurl "${{ github.event.inputs.target_url }}" \
+            -quickout /zap/wrk/zap_report.xml
 
       - name: Verify ZAP report exists
         run: |
-          if [ -f "${{ github.workspace }}/zap-output/zap_report.xml" ]; then
-            echo "✅ Report generated"
+          if [ -f "zap-output/zap_report.xml" ]; then
+            echo "✅ Report generated successfully."
           else
-            echo "❌ Report was not generated"
+            echo "❌ Report not found!"
             exit 1
           fi
 
-      - name: Commit ZAP report to branch
+      - name: Commit report to `zap-report` branch
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b zap-report || git checkout zap-report
-          cp ${{ github.workspace }}/zap-output/zap_report.xml .
-          git add ./zap_report.xml
-          git commit -m "Add ZAP scan report"
+          git fetch origin zap-report || true
+          git checkout zap-report || git checkout -b zap-report
+          cp zap-output/zap_report.xml .
+          git add zap_report.xml
+          git commit -m "Add latest ZAP scan report"
           git push -f origin zap-report
