@@ -1,4 +1,4 @@
-name: ZAP Scan
+name: ZAP Security Scan
 
 on:
   push:
@@ -10,21 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Run ZAP Automation Framework
-        uses: actions/checkout@v4
+    - name: Create writable output directory
+      run: mkdir -p zap_output
 
-      - name: Run ZAP scan
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable \
-            zap.sh -cmd -autorun /zap/wrk/zap.yaml
+    - name: Copy zap.yaml into output directory
+      run: cp zap.yaml zap_output/zap.yaml
 
-      - name: Upload ZAP Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-report
-          path: zap_report.html
+    - name: Run ZAP Scan with Automation Framework
+      uses: docker://ghcr.io/zaproxy/zaproxy:stable
+      with:
+        entrypoint: ""
+      args: >
+        zap.sh -cmd -autorun /zap/wrk/zap.yaml
+      volume: ${{ github.workspace }}/zap_output:/zap/wrk
+
+    - name: Upload ZAP HTML Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: zap-scan-report
+        path: zap_output/zap_report.html
