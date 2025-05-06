@@ -1,10 +1,10 @@
-name: ZAP Scan and Gemini Mitigation
+name: ZAP 5-Minute Scan and Commit Report
 
 on:
   workflow_dispatch:
     inputs:
       target_url:
-        description: "Website to scan"
+        description: "Target website to scan (e.g., https://example.com)"
         required: true
 
 jobs:
@@ -15,36 +15,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Create directory for ZAP reports
+      - name: Create output directory
         run: mkdir -p ${{ github.workspace }}/zap-output
 
       - name: Run ZAP 5-minute baseline scan
         run: |
-          docker run --network="host" \
+          docker run --user root \
             -v ${{ github.workspace }}/zap-output:/zap/wrk \
             ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
               -t "${{ github.event.inputs.target_url }}" \
               -r /zap/wrk/zap_report.html \
               -x /zap/wrk/zap_report.xml \
-              -m 5
+              -m 5 \
+              -d
 
-      - name: Verify ZAP report exists
-        run: |
-          if [ -f "${{ github.workspace }}/zap-output/zap_report.xml" ]; then
-            echo "✅ Report generated successfully."
-          else
-            echo "❌ Report was not generated."
-            exit 1
-          fi
+      - name: Show report files
+        run: ls -lh ${{ github.workspace }}/zap-output
 
       - name: Commit ZAP report to branch
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin
-          git checkout -b zap-report || git checkout zap-report
+          git fetch origin zap-report || git checkout -b zap-report
+          git checkout zap-report || git checkout -b zap-report
           cp ${{ github.workspace }}/zap-output/zap_report.* .
           git add zap_report.*
-          git commit -m "Add ZAP scan report (5-minute baseline)"
-          git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git zap-report
+          git commit -m "Add ZAP scan report for ${{ github.event.inputs.target_url }}" || echo "No changes to commit"
+          git push -f origin zap-report
