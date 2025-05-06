@@ -1,0 +1,30 @@
+env:
+  contexts:
+    - name: "Default Context"
+      urls:
+        - "https://juice-shop.herokuapp.com"
+      includePaths:
+        - "https://juice-shop.herokuapp.com.*"
+      excludePaths: []
+      authentication: {}
+  parameters:
+    failOnError: false
+
+jobs:
+  - type: spider
+    name: Spider the target
+    parameters:
+      context: "Default Context"
+      url: "https://juice-shop.herokuapp.com"
+      maxDuration: 5
+
+  - type: passiveScan-config
+    parameters: {}
+
+  - type: outputSummary
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk
+      reportFile: zap_report.html
