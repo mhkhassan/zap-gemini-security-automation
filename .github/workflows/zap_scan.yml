@@ -19,13 +19,12 @@ jobs:
     - name: Copy zap.yaml into output directory
       run: cp zap.yaml zap_output/zap.yaml
 
-    - name: Run ZAP Scan with Automation Framework
-      uses: docker://ghcr.io/zaproxy/zaproxy:stable
-      with:
-        entrypoint: ""
-      args: >
-        zap.sh -cmd -autorun /zap/wrk/zap.yaml
-      volume: ${{ github.workspace }}/zap_output:/zap/wrk
+    - name: Run ZAP Automation Scan
+      run: |
+        docker run --rm \
+          -v ${{ github.workspace }}/zap_output:/zap/wrk \
+          ghcr.io/zaproxy/zaproxy:stable \
+          zap.sh -cmd -autorun /zap/wrk/zap.yaml
 
     - name: Upload ZAP HTML Report
       uses: actions/upload-artifact@v3
