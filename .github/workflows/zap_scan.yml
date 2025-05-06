@@ -1,0 +1,30 @@
+name: ZAP Scan
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  zap_scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run ZAP Automation Framework
+        uses: actions/checkout@v4
+
+      - name: Run ZAP scan
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable \
+            zap.sh -cmd -autorun /zap/wrk/zap.yaml
+
+      - name: Upload ZAP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-report
+          path: zap_report.html
