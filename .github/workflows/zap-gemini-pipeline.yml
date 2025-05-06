@@ -1,45 +1,45 @@
-name: ZAP 5-Minute Scan and Commit Report
+# name: ZAP 5-Minute Scan and Commit Report
 
-on:
-  workflow_dispatch:
-    inputs:
-      target_url:
-        description: "Target website to scan (e.g., https://example.com)"
-        required: true
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       target_url:
+#         description: "Target website to scan (e.g., https://example.com)"
+#         required: true
 
-jobs:
-  zap-scan:
-    runs-on: ubuntu-latest
+# jobs:
+#   zap-scan:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
 
-      - name: Create output directory
-        run: mkdir -p ${{ github.workspace }}/zap-output
+#       - name: Create output directory
+#         run: mkdir -p ${{ github.workspace }}/zap-output
 
-      - name: Run ZAP 5-minute baseline scan
-        run: |
-          docker run --user root \
-            -v ${{ github.workspace }}/zap-output:/zap/wrk \
-            ghcr.io/zaproxy/zaproxy:stable \
-            zap-baseline.py \
-              -t "${{ github.event.inputs.target_url }}" \
-              -r /zap/wrk/zap_report.html \
-              -x /zap/wrk/zap_report.xml \
-              -m 5 \
-              -d
+#       - name: Run ZAP 5-minute baseline scan
+#         run: |
+#           docker run --user root \
+#             -v ${{ github.workspace }}/zap-output:/zap/wrk \
+#             ghcr.io/zaproxy/zaproxy:stable \
+#             zap-baseline.py \
+#               -t "${{ github.event.inputs.target_url }}" \
+#               -r /zap/wrk/zap_report.html \
+#               -x /zap/wrk/zap_report.xml \
+#               -m 5 \
+#               -d
 
-      - name: Show report files
-        run: ls -lh ${{ github.workspace }}/zap-output
+#       - name: Show report files
+#         run: ls -lh ${{ github.workspace }}/zap-output
 
-      - name: Commit ZAP report to branch
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin zap-report || git checkout -b zap-report
-          git checkout zap-report || git checkout -b zap-report
-          cp ${{ github.workspace }}/zap-output/zap_report.* .
-          git add zap_report.*
-          git commit -m "Add ZAP scan report for ${{ github.event.inputs.target_url }}" || echo "No changes to commit"
-          git push -f origin zap-report
+#       - name: Commit ZAP report to branch
+#         run: |
+#           git config --global user.name "github-actions[bot]"
+#           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+#           git fetch origin zap-report || git checkout -b zap-report
+#           git checkout zap-report || git checkout -b zap-report
+#           cp ${{ github.workspace }}/zap-output/zap_report.* .
+#           git add zap_report.*
+#           git commit -m "Add ZAP scan report for ${{ github.event.inputs.target_url }}" || echo "No changes to commit"
+#           git push -f origin zap-report
